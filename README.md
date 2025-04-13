@@ -23,17 +23,23 @@ x-api-key: your-secret-key
 
 ## ✅ Available Endpoints
 
-| Endpoint                 | Params                | Description                                      |
-|--------------------------|-----------------------|--------------------------------------------------|
-| `/transcript`            | `video_id`            | Fetch subtitles using `youtube-transcript-api`  |
-| `/video_info`            | `video_id`            | Retrieve title, author, publish date, thumbnail |
-| `/channel_info`          | `channel_id`          | Get channel name, subscriber count, description |
-| `/thumbnail_link`        | `video_id`            | Return multiple thumbnail URLs + embed iframe   |
-| `/resolve_channel_id`    | `video_id`            | Resolve the `channel_id` from a video ID        |
+| Endpoint               | Params      | Description                                      |
+|------------------------|-------------|--------------------------------------------------|
+| `/transcript`          | `video_id`  | Fetch subtitles using `youtube-transcript-api`  |
+| `/video_info`          | `video_id`  | Retrieve title, author, publish date, thumbnail |
+| `/channel_info`        | `channel_id`| Get channel name, subscriber count, description |
+| `/thumbnail_link`      | `video_id`  | Return multiple thumbnail URLs + embed iframe   |
+| `/resolve_channel_id`  | `video_id`  | Resolve the `channel_id` from a video ID        |
 
 ---
 
-## 📦 Quick Example (curl)
+## 🧭 Interactive Docs (Swagger UI)
+
+> 👉 Visit [`/docs`](https://your-project.up.railway.app/docs) for interactive API testing and schema preview (powered by FastAPI)
+
+---
+
+## 📦 Example Usage
 
 ```bash
 curl -X GET "https://your-project.up.railway.app/video_info?video_id=dQw4w9WgXcQ" \
@@ -49,7 +55,9 @@ echo "YOUTUBE_API_KEY=your-google-api-key" >> .env
 
 # 3. Run the FastAPI server
 uvicorn main:app --reload
-📁 Project Structure
+
+
+## 📁 Project Structure
 
 .
 ├── main.py            # FastAPI entry point
@@ -58,18 +66,22 @@ uvicorn main:app --reload
 ├── requirements.txt   # Python dependencies
 ├── Procfile           # Railway deployment instruction
 └── .env               # Local environment variables
-📘 Tech Stack
+
+
+## 📘 Tech Stack
 
 FastAPI – for blazing-fast REST API
 Railway – instant cloud deployment
 YouTube APIs:
 youtube-transcript-api (captions)
 google-api-python-client (official YouTube data)
-📄 License
+
+
+## 📄 License
 
 MIT License © 2025
 
-🧪 Coming Soon (optional)
+## 🧪 Coming Soon (optional)
 
  Search by keyword or channel name
  Bulk transcript downloader
