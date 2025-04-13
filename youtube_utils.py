@@ -37,6 +37,10 @@ def get_video_info(video_id: str):
             "publish_date": str(yt.publish_date),
             "thumbnail_url": yt.thumbnail_url
         }
+    
+    except VideoUnavailable:
+        return {"error": "Video is unavailable or has been removed."}
+    
     except Exception as e:
         return {"error": str(e)}
     
