@@ -55,10 +55,11 @@ echo "YOUTUBE_API_KEY=your-google-api-key" >> .env
 
 # 3. Run the FastAPI server
 uvicorn main:app --reload
-```bash
+```
 
 ## 📁 Project Structure
 
+```
 .
 ├── main.py            # FastAPI entry point
 ├── youtube_utils.py   # All API logic (YouTube data handling)
@@ -66,16 +67,15 @@ uvicorn main:app --reload
 ├── requirements.txt   # Python dependencies
 ├── Procfile           # Railway deployment instruction
 └── .env               # Local environment variables
-
+```
 
 ## 📘 Tech Stack
 
-FastAPI – for blazing-fast REST API
-Railway – instant cloud deployment
-YouTube APIs:
-youtube-transcript-api (captions)
-google-api-python-client (official YouTube data)
-
+- FastAPI – for blazing-fast REST API
+- Railway – instant cloud deployment
+- YouTube APIs:
+     - youtube-transcript-api (captions)
+     - google-api-python-client (official YouTube data)
 
 ## 📄 License
 
