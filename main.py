@@ -36,3 +36,22 @@ def video_info(video_id: str):
         dict: Video information (title, author, publish date, thumbnail URL) or error message
     """
     return get_video_info(video_id)
+
+@app.get("/channel_info")
+def channel_info(channel_id: str):
+    """
+    Endpoint to retrieve detailed information about a YouTube channel.
+    
+    Args:
+        channel_id (str): YouTube channel ID
+        
+    Returns:
+        dict: Channel information including:
+            - title: Channel title
+            - description: Channel description
+            - thumbnail_url: Channel thumbnail URL
+            - subscriber_count: Number of subscribers
+            - video_count: Total number of videos
+        Returns an error message if the channel is not found or if an error occurs
+    """
+    return get_channel_info(channel_id)

@@ -1,5 +1,7 @@
+import os
 from youtube_transcript_api import YouTubeTranscriptApi
 from pytube import YouTube
+from googleapiclient.discovery import build
 
 def get_transcript(video_id: str):
     """
@@ -35,5 +37,48 @@ def get_video_info(video_id: str):
             "publish_date": str(yt.publish_date),
             "thumbnail_url": yt.thumbnail_url
         }
+    except Exception as e:
+        return {"error": str(e)}
+    
+def get_channel_info(channel_id: str):
+    """
+    Retrieves detailed information about a YouTube channel using the YouTube Data API.
+    
+    Args:
+        channel_id (str): The YouTube channel ID to fetch information for
+        
+    Returns:
+        dict: A dictionary containing channel details including:
+            - title: Channel title
+            - description: Channel description
+            - thumbnail_url: Channel thumbnail URL
+            - subscriber_count: Number of subscribers
+            - video_count: Total number of videos
+        Returns an error message if the channel is not found or if an error occurs
+    """
+    try:
+        api_key = os.getenv("YOUTUBE_API_KEY")
+        youtube = build("youtube", "v3", developerKey=api_key)
+        request = youtube.channels().list(
+            part="snippet,statistics",
+            id=channel_id
+        )
+        response = request.execute()
+
+        if not response["items"]:
+            return {"error": "Channel not found"}
+
+        item = response["items"][0]
+        snippet = item["snippet"]
+        stats = item["statistics"]
+
+        return {
+            "title": snippet["title"],
+            "description": snippet["description"],
+            "thumbnail_url": snippet["thumbnails"]["default"]["url"],
+            "subscriber_count": stats.get("subscriberCount"),
+            "video_count": stats.get("videoCount"),
+        }
+
     except Exception as e:
         return {"error": str(e)}
