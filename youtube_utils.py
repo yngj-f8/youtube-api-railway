@@ -32,7 +32,7 @@ def get_transcript(video_id: str):
 
 def get_video_info(video_id: str):
     """
-    Retrieves basic information about a YouTube video.
+    Retrieves basic information about a YouTube video using the YouTube Data API.
     
     Args:
         video_id (str): The YouTube video ID to fetch information for
@@ -40,24 +40,39 @@ def get_video_info(video_id: str):
     Returns:
         dict: A dictionary containing either:
             - title: Video title
-            - author: Video author/channel name
-            - publish_date: Video publish date
-            - thumbnail_url: Video thumbnail URL
-            - error: Error message if video is unavailable or an exception occurs
-            
-    Raises:
-        PytubeVideoUnavailable: If the video is unavailable or has been removed
+            - author: Channel title of the video
+            - publish_date: Video publish date in ISO 8601 format
+            - thumbnail_url: High quality thumbnail URL of the video
+            - error: Error message if:
+                - API key is missing
+                - Video is not found
+                - An exception occurs during API call
     """
     try:
-        yt = YouTube(f"https://www.youtube.com/watch?v={video_id}")
+        api_key = os.getenv("YOUTUBE_API_KEY")
+        if not api_key:
+            return {"error": "Missing YOUTUBE_API_KEY"}
+
+        youtube = build("youtube", "v3", developerKey=api_key)
+        request = youtube.videos().list(
+            part="snippet",
+            id=video_id
+        )
+        response = request.execute()
+
+        if not response["items"]:
+            return {"error": "Video not found"}
+
+        item = response["items"][0]
+        snippet = item["snippet"]
+
         return {
-            "title": yt.title,
-            "author": yt.author,
-            "publish_date": str(yt.publish_date),
-            "thumbnail_url": yt.thumbnail_url
+            "title": snippet["title"],
+            "author": snippet["channelTitle"],
+            "publish_date": snippet["publishedAt"],
+            "thumbnail_url": snippet["thumbnails"]["high"]["url"]
         }
-    except PytubeVideoUnavailable:
-        return {"error": "Video is unavailable or has been removed."}
+
     except Exception as e:
         return {"error": f"Exception: {str(e)}"}
 
