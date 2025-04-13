@@ -82,3 +82,35 @@ def get_channel_info(channel_id: str):
 
     except Exception as e:
         return {"error": str(e)}
+    
+def get_thumbnail_and_links(video_id: str):
+    """
+    Retrieves various YouTube video links and thumbnail URLs for a given video ID.
+    
+    Args:
+        video_id (str): The YouTube video ID to fetch links and thumbnails for
+        
+    Returns:
+        dict: A dictionary containing:
+            - video_url: Direct link to the YouTube video
+            - embed_code: HTML iframe embed code for the video
+            - thumbnails: Dictionary of different quality thumbnail URLs:
+                - default: Default quality thumbnail
+                - medium: Medium quality thumbnail
+                - high: High quality thumbnail
+                - maxres: Maximum resolution thumbnail
+        Returns an error message if an error occurs
+    """
+    try:
+        return {
+            "video_url": f"https://www.youtube.com/watch?v={video_id}",
+            "embed_code": f'<iframe width="560" height="315" src="https://www.youtube.com/embed/{video_id}" frameborder="0" allowfullscreen></iframe>',
+            "thumbnails": {
+                "default": f"https://img.youtube.com/vi/{video_id}/default.jpg",
+                "medium": f"https://img.youtube.com/vi/{video_id}/mqdefault.jpg",
+                "high": f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg",
+                "maxres": f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+            }
+        }
+    except Exception as e:
+        return {"error": str(e)}

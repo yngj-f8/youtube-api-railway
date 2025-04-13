@@ -55,3 +55,24 @@ def channel_info(channel_id: str):
         Returns an error message if the channel is not found or if an error occurs
     """
     return get_channel_info(channel_id)
+
+@app.get("/thumbnail_link")
+def thumbnail_link(video_id: str):
+    """
+    Endpoint to retrieve YouTube video links and thumbnail URLs.
+    
+    Args:
+        video_id (str): YouTube video ID
+        
+    Returns:
+        dict: A dictionary containing:
+            - video_url: Direct link to the YouTube video
+            - embed_code: HTML iframe embed code for the video
+            - thumbnails: Dictionary of different quality thumbnail URLs:
+                - default: Default quality thumbnail
+                - medium: Medium quality thumbnail
+                - high: High quality thumbnail
+                - maxres: Maximum resolution thumbnail
+        Returns an error message if an error occurs
+    """
+    return get_thumbnail_and_links(video_id)
