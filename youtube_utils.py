@@ -155,3 +155,44 @@ def get_thumbnail_and_links(video_id: str):
         }
     except Exception as e:
         return {"error": f"Exception: {str(e)}"}
+    
+def resolve_channel_id(video_id: str):
+    """
+    Retrieves the channel ID and title associated with a YouTube video.
+    
+    Args:
+        video_id (str): The YouTube video ID to fetch channel information for
+        
+    Returns:
+        dict: A dictionary containing either:
+            - channel_id: The unique identifier of the channel that uploaded the video
+            - channel_title: The name of the channel that uploaded the video
+            - error: Error message if:
+                - API key is missing
+                - Video is not found
+                - An exception occurs during API call
+    """
+    try:
+        api_key = os.getenv("YOUTUBE_API_KEY")
+        if not api_key:
+            return {"error": "Missing YOUTUBE_API_KEY"}
+
+        youtube = build("youtube", "v3", developerKey=api_key)
+        request = youtube.videos().list(
+            part="snippet",
+            id=video_id
+        )
+        response = request.execute()
+
+        if not response["items"]:
+            return {"error": "Video not found"}
+
+        snippet = response["items"][0]["snippet"]
+        return {
+            "channel_id": snippet["channelId"],
+            "channel_title": snippet["channelTitle"]
+        }
+
+    except Exception as e:
+        return {"error": f"Exception: {str(e)}"}
+

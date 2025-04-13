@@ -88,3 +88,23 @@ def thumbnail_link(video_id: str = Query(...)):
             - error: Error message if an exception occurs
     """
     return get_thumbnail_and_links(video_id)
+
+@app.get("/resolve_channel_id")
+def resolve_channel_id_route(video_id: str):
+    """
+    Endpoint to retrieve the channel ID and title associated with a YouTube video.
+    
+    Args:
+        video_id (str): YouTube video ID
+        
+    Returns:
+        dict: A dictionary containing either:
+            - channel_id: The unique identifier of the channel that uploaded the video
+            - channel_title: The name of the channel that uploaded the video
+            - error: Error message if:
+                - API key is missing
+                - Video is not found
+                - An exception occurs during API call
+    """
+    from youtube_utils import resolve_channel_id
+    return resolve_channel_id(video_id)
