@@ -55,7 +55,7 @@ echo "YOUTUBE_API_KEY=your-google-api-key" >> .env
 
 # 3. Run the FastAPI server
 uvicorn main:app --reload
-
+```bash
 
 ## 📁 Project Structure
 
