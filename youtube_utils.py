@@ -17,6 +17,9 @@ proxies = {
     "https": PROXY_URL,
 }
 
+response = requests.get("http://httpbin.org/ip", proxies=proxies)
+print(response.json())
+
 # Custom Proxy Fetcher with timeout + retry
 class ProxyTranscriptListFetcher(TranscriptListFetcher):
     def __init__(self):
