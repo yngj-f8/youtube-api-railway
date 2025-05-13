@@ -10,15 +10,10 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 # Proxy 설정
-PROXY_URL = "http://docker-tinyproxy.railway.internal:8888"
-
 proxies = {
-    "http": PROXY_URL,
-    "https": PROXY_URL,
+    "http": "http://34.31.244.165:8888",
+    "https": "http://34.31.244.165:8888",
 }
-
-response = requests.get("http://httpbin.org/ip", proxies=proxies)
-print(response.json())
 
 # Custom Proxy Fetcher with timeout + retry
 class ProxyTranscriptListFetcher(TranscriptListFetcher):
@@ -44,10 +39,6 @@ class ProxyTranscriptListFetcher(TranscriptListFetcher):
 
 # Override YouTubeTranscriptApi Fetcher
 YouTubeTranscriptApi._TranscriptListFetcher = ProxyTranscriptListFetcher
-
-# ---------------------------------------------------------------------
-# 기존 get_transcript 함수는 변경할 필요 없음
-# ---------------------------------------------------------------------
 
 def get_transcript(video_id: str):
     """
