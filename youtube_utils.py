@@ -1,36 +1,62 @@
 import os
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
+from youtube_transcript_api._api import TranscriptListFetcher
 from pytube import YouTube
 from pytube.exceptions import VideoUnavailable as PytubeVideoUnavailable
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-# Configure proxy settings
+# Proxy 설정
+PROXY_URL = "http://docker-tinyproxy.railway.internal:8888"
+
 proxies = {
-    "http": "http://docker-tinyproxy.railway.internal:8888",
-    "https": "http://docker-tinyproxy.railway.internal:8888",
+    "http": PROXY_URL,
+    "https": PROXY_URL,
 }
 
-# Create a session with proxy settings
-proxy_session = requests.Session()
-proxy_session.proxies.update(proxies)
+# Custom Proxy Fetcher with timeout + retry
+class ProxyTranscriptListFetcher(TranscriptListFetcher):
+    def __init__(self):
+        super().__init__()
 
-# Override the default session of YouTubeTranscriptApi with the proxy session
-YouTubeTranscriptApi._session = proxy_session
+        # Proxy 적용
+        self._session.proxies.update(proxies)
+
+        # Timeout 적용
+        self._timeout = 10  # 초단위 timeout (기본 요청 최대 10초)
+
+        # Retry 설정
+        retries = Retry(
+            total=3,                  # 총 3번 재시도
+            backoff_factor=1,          # 1초 간격으로 증가 (1초 → 2초 → 4초)
+            status_forcelist=[429, 500, 502, 503, 504],  # 재시도할 HTTP Status
+            allowed_methods=["GET", "POST"]              # 재시도 허용 메소드
+        )
+        adapter = HTTPAdapter(max_retries=retries)
+        self._session.mount("http://", adapter)
+        self._session.mount("https://", adapter)
+
+# YouTubeTranscriptApi에 강제 적용
+YouTubeTranscriptApi._TranscriptListFetcher = ProxyTranscriptListFetcher
+
+# ---------------------------------------------------------------------
+# 기존 get_transcript 및 기타 함수들은 그대로 사용 가능
+# ---------------------------------------------------------------------
 
 def get_transcript(video_id: str):
     """
-    Retrieves the transcript for a given YouTube video ID using a proxy.
+    Retrieves the transcript for a given YouTube video ID using forced proxy with timeout and retry.
 
     Args:
         video_id (str): The YouTube video ID to fetch the transcript for.
 
     Returns:
         dict: A dictionary containing either:
-            - transcript: List of transcript entries with text and timing information
-            - error: Error message if transcript is unavailable or an exception occurs
+            - transcript: List of transcript entries
+            - error: Error message if unavailable
     """
     try:
         transcript = YouTubeTranscriptApi.get_transcript(video_id)
