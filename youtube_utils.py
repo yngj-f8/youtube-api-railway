@@ -1,26 +1,36 @@
 import os
+import requests
+
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
 from pytube import YouTube
 from pytube.exceptions import VideoUnavailable as PytubeVideoUnavailable
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+# Configure proxy settings
+proxies = {
+    "http": "http://docker-tinyproxy.railway.internal:8888",
+    "https": "http://docker-tinyproxy.railway.internal:8888",
+}
+
+# Create a session with proxy settings
+proxy_session = requests.Session()
+proxy_session.proxies.update(proxies)
+
+# Override the default session of YouTubeTranscriptApi with the proxy session
+YouTubeTranscriptApi._session = proxy_session
+
 def get_transcript(video_id: str):
     """
-    Retrieves the transcript for a given YouTube video ID.
-    
+    Retrieves the transcript for a given YouTube video ID using a proxy.
+
     Args:
-        video_id (str): The YouTube video ID to fetch the transcript for
-        
+        video_id (str): The YouTube video ID to fetch the transcript for.
+
     Returns:
         dict: A dictionary containing either:
             - transcript: List of transcript entries with text and timing information
             - error: Error message if transcript is unavailable or an exception occurs
-            
-    Raises:
-        TranscriptsDisabled: If the video has transcripts disabled
-        NoTranscriptFound: If no transcript is available for the video
-        VideoUnavailable: If the video is unavailable
     """
     try:
         transcript = YouTubeTranscriptApi.get_transcript(video_id)
