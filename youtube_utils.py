@@ -1,41 +1,51 @@
 import os
 import requests
-
 from requests.adapters import HTTPAdapter, Retry
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
-from youtube_transcript_api import _api  # 내부 접근
+from youtube_transcript_api import _api
 from pytube import YouTube
 from pytube.exceptions import VideoUnavailable as PytubeVideoUnavailable
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-# 1. Proxy 설정
+# =============================
+# 1. Global Proxy + Retry + Timeout Setup
+# =============================
+
+# Define proxy server with authentication
 proxies = {
     "http": "http://fuser:fpass@118.216.66.169:8888",
     "https": "http://fuser:fpass@118.216.66.169:8888",
 }
 
-# 2. Session 생성 + 설정
+# Create a session for proxy requests
 session = requests.Session()
 session.proxies.update(proxies)
 
-# 3. Timeout + Retry 추가
+# Configure retry strategy for transient errors
 retries = Retry(
-    total=3,
-    backoff_factor=1,
-    status_forcelist=[429, 500, 502, 503, 504],
-    allowed_methods=["GET", "POST"],
+    total=3,  # Maximum retry attempts
+    backoff_factor=1,  # Exponential backoff factor
+    status_forcelist=[429, 500, 502, 503, 504],  # HTTP statuses that trigger a retry
+    allowed_methods=["GET", "POST"],  # Retry on GET and POST
 )
+
+# Mount the retry logic to HTTP and HTTPS adapters
 adapter = HTTPAdapter(max_retries=retries)
 session.mount("http://", adapter)
 session.mount("https://", adapter)
 
-# 4. YouTubeTranscriptApi에 강제 세팅
+# Patch YouTubeTranscriptApi's internal session to use the configured proxy session
 _api._session = session
+
+# =============================
+# 2. API Functions
+# =============================
 
 def get_transcript(video_id: str):
     """
-    Retrieves the transcript for a given YouTube video ID using proxy, timeout, and retry settings.
+    Retrieves the transcript for a given YouTube video ID.
+    All requests will use the global proxy session.
     """
     try:
         transcript = YouTubeTranscriptApi.get_transcript(video_id)
@@ -44,24 +54,11 @@ def get_transcript(video_id: str):
         return {"error": "Transcript is unavailable for this video."}
     except Exception as e:
         return {"error": f"Exception: {str(e)}"}
-        
+
 def get_video_info(video_id: str):
     """
     Retrieves basic information about a YouTube video using the YouTube Data API.
-    
-    Args:
-        video_id (str): The YouTube video ID to fetch information for
-        
-    Returns:
-        dict: A dictionary containing either:
-            - title: Video title
-            - author: Channel title of the video
-            - publish_date: Video publish date in ISO 8601 format
-            - thumbnail_url: High quality thumbnail URL of the video
-            - error: Error message if:
-                - API key is missing
-                - Video is not found
-                - An exception occurs during API call
+    This function does not use proxy since Google API client has its own request handling.
     """
     try:
         api_key = os.getenv("YOUTUBE_API_KEY")
@@ -94,32 +91,19 @@ def get_video_info(video_id: str):
 def get_channel_info(channel_id: str):
     """
     Retrieves detailed information about a YouTube channel using the YouTube Data API.
-    
-    Args:
-        channel_id (str): The YouTube channel ID to fetch information for
-        
-    Returns:
-        dict: A dictionary containing either:
-            - title: Channel title
-            - description: Channel description
-            - thumbnail_url: Channel thumbnail URL
-            - subscriber_count: Number of subscribers
-            - video_count: Total number of videos
-            - error: Error message if channel is not found or an exception occurs
-            
-    Raises:
-        HttpError: If there's an error with the YouTube API request
     """
     try:
         api_key = os.getenv("YOUTUBE_API_KEY")
         if not api_key:
             return {"error": "Missing YOUTUBE_API_KEY"}
+
         youtube = build("youtube", "v3", developerKey=api_key)
         request = youtube.channels().list(
             part="snippet,statistics",
             id=channel_id
         )
         response = request.execute()
+
         if not response["items"]:
             return {"error": "Channel not found"}
 
@@ -141,21 +125,7 @@ def get_channel_info(channel_id: str):
 
 def get_thumbnail_and_links(video_id: str):
     """
-    Retrieves various YouTube video links and thumbnail URLs for a given video ID.
-    
-    Args:
-        video_id (str): The YouTube video ID to fetch links and thumbnails for
-        
-    Returns:
-        dict: A dictionary containing either:
-            - video_url: Direct link to the YouTube video
-            - embed_code: HTML iframe embed code for the video
-            - thumbnails: Dictionary of different quality thumbnail URLs
-                - default: Default quality thumbnail
-                - medium: Medium quality thumbnail
-                - high: High quality thumbnail
-                - maxres: Maximum resolution thumbnail
-            - error: Error message if an exception occurs
+    Retrieves multiple thumbnail URLs and video links for a given YouTube video ID.
     """
     try:
         return {
@@ -170,22 +140,10 @@ def get_thumbnail_and_links(video_id: str):
         }
     except Exception as e:
         return {"error": f"Exception: {str(e)}"}
-    
+
 def resolve_channel_id(video_id: str):
     """
-    Retrieves the channel ID and title associated with a YouTube video.
-    
-    Args:
-        video_id (str): The YouTube video ID to fetch channel information for
-        
-    Returns:
-        dict: A dictionary containing either:
-            - channel_id: The unique identifier of the channel that uploaded the video
-            - channel_title: The name of the channel that uploaded the video
-            - error: Error message if:
-                - API key is missing
-                - Video is not found
-                - An exception occurs during API call
+    Retrieves the channel ID and channel title for a given YouTube video.
     """
     try:
         api_key = os.getenv("YOUTUBE_API_KEY")
@@ -210,4 +168,3 @@ def resolve_channel_id(video_id: str):
 
     except Exception as e:
         return {"error": f"Exception: {str(e)}"}
-
