@@ -11,8 +11,8 @@ from googleapiclient.errors import HttpError
 
 # Proxy 설정
 proxies = {
-    "http": "http://195.201.116.31:8888",
-    "https": "http://195.201.116.31:8888",
+    "http": "http://fuser:fpass@118.216.66.169:8888",
+    "https": "http://fuser:fpass@118.216.66.169:8888",
 }
 
 # Custom Proxy Fetcher with timeout + retry
