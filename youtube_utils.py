@@ -1,44 +1,37 @@
 import os
 import requests
-from requests.adapters import HTTPAdapter, Retry
 
+from requests.adapters import HTTPAdapter, Retry
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
-from youtube_transcript_api._api import TranscriptListFetcher
+from youtube_transcript_api import _api  # 내부 접근
 from pytube import YouTube
 from pytube.exceptions import VideoUnavailable as PytubeVideoUnavailable
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-# Proxy 설정
+# 1. Proxy 설정
 proxies = {
     "http": "http://fuser:fpass@118.216.66.169:8888",
     "https": "http://fuser:fpass@118.216.66.169:8888",
 }
 
-# Custom Proxy Fetcher with timeout + retry
-class ProxyTranscriptListFetcher(TranscriptListFetcher):
-    def __init__(self):
-        super().__init__()
+# 2. Session 생성 + 설정
+session = requests.Session()
+session.proxies.update(proxies)
 
-        # Apply proxy settings
-        self._session.proxies.update(proxies)
+# 3. Timeout + Retry 추가
+retries = Retry(
+    total=3,
+    backoff_factor=1,
+    status_forcelist=[429, 500, 502, 503, 504],
+    allowed_methods=["GET", "POST"],
+)
+adapter = HTTPAdapter(max_retries=retries)
+session.mount("http://", adapter)
+session.mount("https://", adapter)
 
-        # Set timeout for all requests
-        self._timeout = 10  # 10 seconds
-
-        # Configure retry strategy
-        retries = Retry(
-            total=3,
-            backoff_factor=1,
-            status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["GET", "POST"]
-        )
-        adapter = HTTPAdapter(max_retries=retries)
-        self._session.mount("http://", adapter)
-        self._session.mount("https://", adapter)
-
-# Override YouTubeTranscriptApi Fetcher
-YouTubeTranscriptApi._TranscriptListFetcher = ProxyTranscriptListFetcher
+# 4. YouTubeTranscriptApi에 강제 세팅
+_api._session = session
 
 def get_transcript(video_id: str):
     """
@@ -51,6 +44,7 @@ def get_transcript(video_id: str):
         return {"error": "Transcript is unavailable for this video."}
     except Exception as e:
         return {"error": f"Exception: {str(e)}"}
+        
 def get_video_info(video_id: str):
     """
     Retrieves basic information about a YouTube video using the YouTube Data API.
